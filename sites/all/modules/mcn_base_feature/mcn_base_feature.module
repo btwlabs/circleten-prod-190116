@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the MCN Base Feature feature.
+ */
+
+include_once('mcn_base_feature.features.inc');

@@ -1,0 +1,5 @@
+name = MCN Circle10 glue
+description = Modifcations for Circle10
+core = 7.x
+package = MCN
+files[] = mcn_circleten.module
