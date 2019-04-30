@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ *   Extends Aggregator with a new fetcher,
+ *   and chooses standard fetcher if file format is other than .ics (iCal).
+ */
+ 
+// Load aggregator.parser.inc from the node module.
+module_load_include('inc', 'aggregator', 'aggregator.parser');
+// Load aggregator.fetcher.inc from the node module.
+module_load_include('inc', 'aggregator', 'aggregator.fetcher');
+
+/**
+ * Define the location of the ical2rss package
+ * Credits to http://ical2rss.sourceforge.net/
+ */
+global $base_url;
+define('ICAL2RSS', $base_url . '/' . drupal_get_path('module', 'ical_aggregator') . '/ical2rss/ical2rss.php?url=');
+
+
+/**
+ * Implements hook_help().
+ */
+function ical_aggregator_help($path, $arg) {
+  switch ($path) {
+    case 'admin/config/services/aggregator/add/feed':
+      return '<p>' . t('Now also supporting iCal. Credits <a href="http://sypreme.se">Tim Brandin</a>') . '</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_aggregator_fetch_info().
+ */
+function ical_aggregator_aggregator_fetch_info() {
+  return array(
+    'title' => t('iCal fetcher'),
+    'description' => t('Extends normal fetcher to take iCal feeds.'),
+  );
+}
+
+/**
+ * Implements hook_aggregator_fetch().
+ */
+function ical_aggregator_aggregator_fetch($feed) {
+
+  // Get url info
+  $url_info = parse_url($feed->url);
+
+  // Get path info
+  $path_info = pathinfo($url_info['path']);
+
+  // Use ical2rss when call is for .ics format
+  if (strstr($path_info['extension'], 'ics') != FALSE) {
+    $feed->url = ICAL2RSS . $feed->url;
+  }
+
+  // Call standard fetcher
+  if (module_exists('aggregator')) {
+    return aggregator_aggregator_fetch($feed);
+  }
+
+  return FALSE;
+}
