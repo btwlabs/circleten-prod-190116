@@ -1,0 +1,6 @@
+<?php
+/**
+ * @file
+ */
+
+include_once('mcn_wysiwyg.features.inc');

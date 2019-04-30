@@ -2,31 +2,59 @@
 
 /**
  * Init install profile functions on behalf of the caller.
+ *
+ * @param string $profile_name
+ *   The machine name of the profile.
  */
 function profiler_v2($profile_name) {
   $code =
 <<<EOT
-if (!function_exists('{$profile_name}_install_tasks')) {
-  function {$profile_name}_install_tasks() {
+  function {$profile_name}_install_tasks(&\$install_state) {
     include_once('profiler_api.inc');
-    return profiler_install_tasks(profiler_v2_load_config('{$profile_name}'));
-  }
-}
 
-if (!function_exists('{$profile_name}_install_tasks_alter')) {
+    if (function_exists('{$profile_name}_profiler_install_tasks')) {
+      \$tasks = {$profile_name}_profiler_install_tasks(\$install_state);
+    }
+    else {
+      \$tasks = array();
+    }
+
+    \$profiler_tasks = profiler_install_tasks(profiler_v2_load_config('{$profile_name}'));
+
+    // Place profiler's tasks at the very end of the array.
+    return array_merge(\$tasks, \$profiler_tasks);
+  }
+
   function {$profile_name}_install_tasks_alter(&\$tasks, \$install_state) {
     include_once('profiler_api.inc');
-    return profiler_install_tasks_alter(profiler_v2_load_config('{$profile_name}'), \$tasks, \$install_state);
-  }
-}
 
-if (!function_exists('{$profile_name}_form_install_configure_form_alter')) {
-  function {$profile_name}_form_install_configure_form_alter(&\$form, \$form_state) {
-    include_once('profiler_api.inc');
-    return profiler_form_install_configure_form_alter(profiler_v2_load_config('{$profile_name}'), \$form, \$form_state);
+    profiler_install_tasks_alter(
+      profiler_v2_load_config('{$profile_name}'),
+      \$tasks,
+      \$install_state);
+
+    if (function_exists('{$profile_name}_profiler_install_tasks_alter')) {
+      {$profile_name}_profiler_install_tasks_alter(\$tasks, \$install_state);
+    }
   }
-}
+
+  function {$profile_name}_form_install_configure_form_alter(&\$form, &\$form_state) {
+    include_once('profiler_api.inc');
+
+    profiler_form_install_configure_form_alter(
+      profiler_v2_load_config(
+        '{$profile_name}'),
+        \$form,
+        \$form_state);
+
+    if (function_exists('{$profile_name}_profiler_form_install_configure_form_alter')) {
+      {$profile_name}_profiler_form_install_configure_form_alter(
+        \$form,
+        \$form_state);
+    }
+  }
 EOT;
+
   eval($code);
 }
 

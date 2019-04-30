@@ -1,0 +1,14 @@
+name = iCal Aggregator
+description = Extends Aggregator to parse iCal.
+package = "Other"
+core = 7.x
+
+dependencies[] = aggregator
+
+files[] = ical_aggregator.module
+
+
+; Information added by drush on 2011-07-07
+version = "unknown"
+project = "ical_aggregator"
+datestamp = "1310051398"

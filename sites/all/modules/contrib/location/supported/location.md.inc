@@ -1,10 +1,16 @@
 <?php
 
-// Moldova, Republic of
+/**
+ * @file
+ * Moldova, Republic of.
+ */
 
+/**
+ * Returns an associative array of states/territories.
+ */
 function location_province_list_md() {
   return array(
-    'C'  => "Chișinău",
+    'C' => "Chișinău",
     'AN' => "Anenii Noi",
     'BS' => "Basarabeasca",
     'BE' => "Bender",
@@ -38,7 +44,7 @@ function location_province_list_md() {
     'SR' => "Soroca",
     'ST' => "Strășeni",
     'SD' => "Șoldănești",
-    'SV' => "Șoldănești",
+    'SV' => "Ștefan Vodă",
     'TR' => "Taraclia",
     'TL' => "Telenești",
     'TS' => "Tiraspol",

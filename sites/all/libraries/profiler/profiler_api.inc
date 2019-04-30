@@ -12,6 +12,8 @@ foreach (array_keys(_system_rebuild_module_data()) as $module) {
   }
 }
 
+require_once 'site_install_hooks.inc';
+
 /**
  * @see hook_install_tasks().
  *
@@ -31,6 +33,9 @@ function profiler_install_tasks($config) {
 function profiler_install_tasks_alter($config, &$tasks, $install_state) {
   // Replace the modules profile task function with our custom callback.
   $tasks['install_profile_modules']['function'] = 'profiler_install_profile_modules';
+
+  // Integrate pre- and post-install hooks.
+  _profiler_site_install_hooks_tasks_alter($tasks, $install_state);
 }
 
 /**

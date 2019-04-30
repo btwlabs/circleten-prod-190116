@@ -25,7 +25,7 @@ function profiler_install_files($files, $config, &$identifiers) {
       if (file_prepare_directory(dirname($file['destination']), FILE_CREATE_DIRECTORY)) {
         // Prepare file object.
         $destination = $file['destination'];
-        unset($destination);
+        unset($file['destination']);
         $file = (object) $file;
 
         $scheme = file_uri_scheme($file->uri);
