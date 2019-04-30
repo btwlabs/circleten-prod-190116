@@ -5,7 +5,7 @@
  */
 
 /**
- * Provides some basic functionality for all MBP tests.
+ * provides some basic functionality for all MBP tests.
  */
 class MediaBrowserPlusTestBase extends DrupalWebTestCase {
 
@@ -16,11 +16,6 @@ class MediaBrowserPlusTestBase extends DrupalWebTestCase {
    */
   protected $adminUser = FALSE;
 
-  /**
-   * Prepare testing.
-   *
-   * Declare dependencies and create admin user.
-   */
   public function setUp() {
     parent::setUp(array(
       'file_entity',

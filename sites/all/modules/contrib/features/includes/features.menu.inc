@@ -103,6 +103,7 @@ function menu_custom_features_export_render($module, $data) {
     $code[] = features_translatables_export($translatables, '  ');
   }
 
+  $code[] = '';
   $code[] = '  return $menus;';
   $code = implode("\n", $code);
   return array('menu_default_menu_custom' => $code);
@@ -247,16 +248,16 @@ function menu_links_features_export_render($module, $data, $export = NULL) {
        unset($link['plid']);
        unset($link['mlid']);
 
-      $code[] = "  // Exported menu link: {$new_identifier}.";
+      $code[] = "  // Exported menu link: {$new_identifier}";
       $code[] = "  \$menu_links['{$new_identifier}'] = ". features_var_export($link, '  ') .";";
       $translatables[] = $link['link_title'];
     }
   }
-  $code[] = '';
   if (!empty($translatables)) {
     $code[] = features_translatables_export($translatables, '  ');
   }
 
+  $code[] = '';
   $code[] = '  return $menu_links;';
   $code = implode("\n", $code);
   return array('menu_default_menu_links' => $code);
@@ -295,27 +296,18 @@ function menu_links_features_rebuild_ordered($menu_links, $reset = FALSE) {
         foreach ($unordered as $key => $link) {
           $identifier = menu_links_features_identifier($link);
           $parent = isset($link['parent_identifier']) ? $link['parent_identifier'] : '';
-          $weight = 0;
-          // Parent has been seen, so weigh this above parent.
-          if (isset($ordered[$parent])) {
-            $weight = $ordered[$parent] + 1;
+          if (empty($parent)) {
+            $ordered[$identifier] = 0;
+            $all_links[$identifier] = $link;
+            unset($unordered[$key]);
           }
-          // Next loop will try to find parent weight instead.
-          elseif ($parent) {
-            continue;
+          elseif (isset($ordered[$parent])) {
+            $ordered[$identifier] = $ordered[$parent] + 1;
+            $all_links[$identifier] = $link;
+            unset($unordered[$key]);
           }
-          $ordered[$identifier] = $weight;
-          $all_links[$identifier] = $link;
-          unset($unordered[$key]);
         }
-      // Exit out when the above does no changes this loop.
       } while (count($unordered) < $current);
-    }
-    // Add all remaining unordered items to the ordered list.
-    foreach ($unordered as $link) {
-      $identifier = menu_links_features_identifier($link);
-      $ordered[$identifier] = 0;
-      $all_links[$identifier] = $link;
     }
     asort($ordered);
   }
@@ -365,11 +357,10 @@ function features_menu_link_load($identifier) {
     list($menu_name, $link_path) = explode(':', $identifier, 2);
   }
   $links = db_select('menu_links')
-    ->fields('menu_links', array('menu_name', 'mlid', 'plid', 'link_path', 'router_path', 'link_title', 'options', 'module', 'hidden', 'external', 'has_children', 'expanded', 'weight', 'customized'))
-    ->condition('menu_name', $menu_name)
-    ->condition('link_path', $link_path)
-    ->addTag('features_menu_link')
-    ->execute()
+     ->fields('menu_links', array('menu_name', 'mlid', 'plid', 'link_path', 'router_path', 'link_title', 'options', 'module', 'hidden', 'external', 'has_children', 'expanded', 'weight', 'customized'))
+     ->condition('menu_name', $menu_name)
+     ->condition('link_path', $link_path)
+     ->execute()
     ->fetchAllAssoc('mlid');
 
   foreach($links as $link) {
@@ -401,14 +392,11 @@ function features_menu_link_load($identifier) {
 
     foreach($links as $link) {
       $link->options = unserialize($link->options);
-      // Links with a stored identifier must only be matched on that identifier,
-      // to prevent cross over assumptions.
-      if (isset($link->options['identifier'])) {
-        if (strcmp($link->options['identifier'], $identifier) == 0) {
-          return (array)$link;
-        }
-      }
-      elseif ((strcmp(features_clean_title($link->link_title), $clean_title) == 0)) {
+
+      // title or previous identifier matches
+      if ((isset($link->options['identifier']) && strcmp($link->options['identifier'], $identifier) == 0)
+          || (isset($clean_title) && strcmp(features_clean_title($link->link_title), $clean_title) == 0)) {
+
         return (array)$link;
       }
     }
@@ -420,12 +408,8 @@ function features_menu_link_load($identifier) {
  * Returns a lowercase clean string with only letters, numbers and dashes
  */
 function features_clean_title($str) {
-  return strtolower(preg_replace_callback('/(\s)|([^a-zA-Z\-0-9])/i', '_features_clean_title', $str));
-}
-
-/**
- * Callback function for preg_replace_callback() to clean a string.
- */
-function _features_clean_title($matches) {
-  return $matches[1] ? '-' : '';
+  return strtolower(preg_replace_callback('/(\s)|([^a-zA-Z\-0-9])/i', create_function(
+          '$matches',
+          'return $matches[1]?"-":"";'
+      ), $str));
 }

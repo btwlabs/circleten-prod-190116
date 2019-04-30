@@ -1,0 +1,139 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the twitter_block module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function twitter_block_schema() {
+  $schema['twitter_block'] = array(
+    'description' => 'The table for storing twitter blocks.',
+    'fields' => array(
+      'bid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => "The block's {block}.bid.",
+      ),
+      'info' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Block description.',
+      ),
+      'search_type' => array(
+        'description' => 'The search type for this block. ie. mention, reply',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'search',
+      ),
+      'include_rts' => array(
+        'description' => 'Whether retweets should be included in the search results. (1 = enabled, 0 = disabled)',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'size' => 'tiny',
+      ),
+      'search_string' => array(
+        'description' => 'The search string.',
+        'type' => 'varchar',
+        'length' => 140,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'results_per_page' => array(
+        'description' => '"Returns per page" from the Twitter Search API.',
+        'type' => 'varchar',
+        'length' => 8,
+      ),
+      'lang' => array(
+        'description' => 'Optional Twitter language filter.',
+        'type' => 'varchar',
+        'length' => 2,
+      ),
+    ),
+    'unique keys' => array(
+      'info' => array('info'),
+    ),
+    'primary key' => array('bid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function twitter_block_uninstall() {
+  // Remove blocks
+  db_delete('block')
+    ->condition('module', 'twitter_block')
+    ->execute();
+  db_delete('block_role')
+    ->condition('module', 'twitter_block')
+    ->execute();
+
+  // Clear the site cache
+  cache_clear_all();
+}
+
+/**
+ * Add a language field to the {twitter_block} table.
+ */
+function twitter_block_update_7100() {
+  $new_field = array(
+    'description' => 'Optional Twitter language filter.',
+    'type' => 'varchar',
+    'length' => 6,
+  );
+
+  db_add_field('twitter_block', 'lang', $new_field);
+
+  return t('Added a language field to the {twitter_block} table.');
+}
+
+/**
+ * Change the length of the language field.
+ */
+function twitter_block_update_7101() {
+  $new_field = array(
+    'description' => 'Optional Twitter language filter.',
+    'type' => 'varchar',
+    'length' => 2,
+  );
+
+  db_change_field('twitter_block', 'lang', 'lang', $new_field);
+
+  return t('Changed the length of the language field.');
+}
+
+/**
+ * Add a retweet field to the {twitter_block} table.
+ */
+function twitter_block_update_7102() {
+  $new_field = array(
+    'description' => 'Whether retweets should be included in the search results. (1 = enabled, 0 = disabled)',
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 1,
+    'size' => 'tiny',
+  );
+
+  db_add_field('twitter_block', 'include_rts', $new_field);
+
+  return t('Added a retweet field to the {twitter_block} table.');
+}
+
+/**
+ * Remove the unnecessary "results_per_page" variable.
+ */
+function twitter_block_update_7103() {
+  variable_del('twitter_block_default_results_per_page');
+
+  return t('Removed the unnecessary "results_per_page" variable.');
+}

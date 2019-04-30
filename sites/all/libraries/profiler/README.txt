@@ -11,8 +11,6 @@ Profiler for an install profile are:
 - Inheritance between install profiles and definition of sub-profiles that can
   override specific aspects of base profiles.
 - Simplified migration path between Drupal 6.x and 7.x install profiles.
-- The ability to invoke code before all modules are installed (hook_site_pre_install) or
-  after the entire profile has been installed (hook_site_post_install).
 
 
 Implementing Profiler in an install profile
@@ -144,17 +142,6 @@ modules to be included in your install profile are noted below.
   exposes a serious vulnerability because of widespread reverse-lookup
   databases.
 
-
-- `roles`
-
-  A keyed array of role objects. Each role object is passed nearly directly
-  to user_role_save(). You can specify just a role name, or an array with name
-  and weight:
-
-        roles[administrator] = administrator
-        roles[content editor][name] = content editor
-        roles[content editor][weight] = 2
-
 - `nodes`
 
   A keyed array of node objects. Each node object is passed nearly directly to
@@ -225,35 +212,6 @@ modules to be included in your install profile are noted below.
       files[druplicon][uid] = 1
 
   No default values will be provided.
-
-
-Implementing hook_site_pre_install and hook_site_post_install hooks
--------------------------------------------------------------------
-Declare one or both of the following hooks in your profile's .install file:
-
-    function yourprofile_site_pre_install() {
-      // My custom pre-install code
-    }
-
-    function yourprofile_site_post_install() {
-      // My custom post-install code
-    }
-
-The code in the pre_install hook is invoked immediately before any module the profile depends on are installed.
-
-The code in the post_install hook is invoked at the very end of the installation, before the user is sent to log-in to
-the new site.
-
-Implementing task hooks
------------------------
-Profiler already provides its own implementations of hook_install_tasks(), hook_install_tasks_alter(), and
-hook_form_install_configure_form_alter() in your profile's namespace so you can't directly implement those in
-your profile code. If you do, you'll get a fatal PHP error during install about re-declaring the hooks.
-
-Instead, implement hook_profiler_install_tasks(), hook_profiler_install_tasks_alter(), and/or
-hook_profiler_form_install_configure_form_alter() (note the extra "_profiler" part in the hook names) and Profiler's
-hooks will automatically invoke your hooks at the appropriate times. The signatures for the hooks are identical to
-Drupal's standard hooks.
 
 Maintainer
 ----------

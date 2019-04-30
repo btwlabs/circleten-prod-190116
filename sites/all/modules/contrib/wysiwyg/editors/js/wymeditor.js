@@ -8,7 +8,7 @@ Drupal.wysiwyg.editor.attach.wymeditor = function (context, params, settings) {
   settings.wymPath = settings.basePath + settings.wymPath;
   // Update activeId on focus.
   settings.postInit = function (instance) {
-    $(instance._doc).find('body').focus(function () {
+    $(instance._doc).focus(function () {
       Drupal.wysiwyg.activeId = params.field;
     });
   };
@@ -17,27 +17,33 @@ Drupal.wysiwyg.editor.attach.wymeditor = function (context, params, settings) {
 };
 
 /**
- * Detach a single editor instance.
+ * Detach a single or all editors.
  */
 Drupal.wysiwyg.editor.detach.wymeditor = function (context, params, trigger) {
-  var $field = $('#' + params.field, context);
-  var index = $field.data(WYMeditor.WYM_INDEX);
-  if (typeof index == 'undefined' || !WYMeditor.INSTANCES[index]) {
-    return;
-  }
-  var instance = WYMeditor.INSTANCES[index];
-  var i;
-  instance.update();
-  if (trigger != 'serialize') {
-    $(instance._box).remove();
-    $(instance._element).show();
-    $field.removeData(WYMeditor.WYM_INDEX);
-    WYMeditor.INSTANCES.splice(index, 1);
-    // Reindex the editors to maintain internal state..
-    for (i = 0; i < WYMeditor.INSTANCES.length; i++) {
-      WYMeditor.INSTANCES[i]._index = i;
+  var instances = [];
+  if (typeof params != 'undefined') {
+    var $field = $('#' + params.field, context);
+    var index = $field.data(WYMeditor.WYM_INDEX);
+    if (typeof index != 'undefined') {
+      instances[index] = WYMeditor.INSTANCES[index];
     }
-    $field.show();
+  }
+  else {
+    instances = WYMeditor.INSTANCES;
+  }
+  for (var index in instances) {
+    if (instances.hasOwnProperty(index)){
+      var instance = instances[index];
+      instance.update();
+      if (trigger != 'serialize') {
+        $(instance._box).remove();
+        $(instance._element).show();
+        delete WYMeditor.INSTANCES[index];
+      }
+    }
+    if (trigger != 'serialize') {
+      $field.show();
+    }
   }
 };
 

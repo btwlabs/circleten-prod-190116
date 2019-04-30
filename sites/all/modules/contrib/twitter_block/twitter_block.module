@@ -1,0 +1,355 @@
+<?php
+
+/**
+ * @file
+ * A module to provide simple Twitter blocks using the Twitter Search API.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function twitter_block_help($path, $arg) {
+  switch ($path) {
+    case 'admin/structure/block/add-twitter-block':
+      return '<p>' . t('Use this page to create a new custom Twitter block.') . '</p>';
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function twitter_block_menu() {
+  // Create an array of block settings
+  $settings = array(
+    'title' => 'Add Twitter block',
+    'description' => 'Add a new Twitter block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_block_add_block_form'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'twitter_block.admin.inc',
+  );
+
+  // Add a local action to the block configuration page
+  $items['admin/structure/block/add-twitter-block'] = array(
+    'access arguments' => array('administer blocks'),
+  ) + $settings;
+
+  // Get the default site theme
+  $default_theme = variable_get('theme_default', 'bartik');
+
+  // Add a local action to the per-theme block configuration pages
+  foreach (list_themes() as $key => $theme) {
+    if ($key != $default_theme) {
+      $items['admin/structure/block/list/' . $key . '/add-twitter-block'] = array(
+        'access callback' => '_twitter_block_themes_access',
+        'access arguments' => array($theme),
+      ) + $settings;
+    }
+  }
+
+  $items['admin/structure/block/administer/%/%/delete'] = array(
+    'title' => 'Delete Twitter block',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('twitter_block_delete', 4, 5),
+    'access arguments' => array('administer blocks'),
+    'type' => MENU_CALLBACK,
+    'file' => 'twitter_block.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Menu item access callback - only admin or enabled themes can be accessed.
+ */
+function _twitter_block_themes_access($theme) {
+  return user_access('administer blocks') && drupal_theme_access($theme);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter();
+ */
+function twitter_block_form_block_admin_display_form_alter(&$form, &$form_state, $form_id) {
+  $result = db_query('SELECT bid FROM {twitter_block}');
+
+  // Add delete links to Twitter Block blocks
+  foreach ($result as $block) {
+    $form['blocks']['twitter_block_' . $block->bid]['delete'] = array(
+      '#type' => 'link',
+      '#title' => t('delete'),
+      '#href' => 'admin/structure/block/administer/twitter_block/' . $block->bid . '/delete',
+    );
+  }
+}
+
+/**
+ * Returns information from database about a user-created (Twitter) block.
+ *
+ * @param $bid
+ *   ID of the block to get information for.
+ *
+ * @return
+ *   Associative array of information stored in the database for this block.
+ *   Array keys:
+ *   - bid: Block ID.
+ *   - info: Block description.
+ *   - search_type: Type of search to perform.
+ *   - include_rts: Whether to include retweets.
+ *   - search_string: String to search for.
+ *   - results_per_page: Number of tweets to display.
+ *   - lang: Language to restrict tweets to.
+ */
+function twitter_block_block_get($bid) {
+  return db_query("SELECT * FROM {twitter_block} WHERE bid = :bid", array(':bid' => $bid))->fetchAssoc();
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function twitter_block_block_info() {
+  $blocks = array();
+
+  $result = db_query('SELECT bid, info FROM {twitter_block} ORDER BY info');
+  foreach ($result as $block) {
+    $blocks[$block->bid]['info'] = $block->info;
+  }
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function twitter_block_block_configure($delta = 0) {
+  if ($delta) {
+    $twitter_block = twitter_block_block_get($delta);
+  }
+  else {
+    $twitter_block = array();
+  }
+  return twitter_block_custom_block_form($twitter_block);
+}
+
+/**
+ * Form constructor for the Twitter block form.
+ *
+ * @param $edit
+ *   (optional) An associative array of information retrieved by
+ *   twitter_block_block_get() if an existing block is being edited, or an
+ *   empty array otherwise. Defaults to array().
+ *
+ * @ingroup forms
+ */
+function twitter_block_custom_block_form($edit = array()) {
+  $edit += array(
+    'info' => '',
+    'search_type' => array(),
+    'search_string' => '',
+    'include_rts' => TRUE,
+    'lang' => '',
+    'results_per_page' => 10,
+  );
+  $form['info'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Block description'),
+    '#default_value' => $edit['info'],
+    '#maxlength' => 64,
+    '#description' => t('A brief description of your block. Used on the <a href="@overview">Blocks administration page</a>.', array('@overview' => url('admin/structure/block'))),
+    '#required' => TRUE,
+  );
+  $form['configuration'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Twitter Block configuration'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['configuration']['search_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('Search type'),
+    '#options' => array(
+      'searchHashtag' => t('Tweets mentioning a hashtag or search string'),
+      'getTweetsFrom' => t('Tweets sent from a specific user'),
+      'getReplies' => t('Replies to the a specific user'),
+      'getMentions' => t('Tweets mentioning a specific user'),
+    ),
+    '#default_value' => $edit['search_type'],
+    '#description' => t('Choose the method to use when searching tweets.'),
+    '#required' => TRUE,
+  );
+  $form['configuration']['search_string'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Search query'),
+    '#default_value' => $edit['search_string'],
+    '#description' => t('Enter a username, hashtag or search string depending on the currently selected search type.'),
+    '#maxlength' => 140,
+  );
+  $form['configuration']['include_rts'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include retweets'),
+    '#default_value' => $edit['include_rts'],
+  );
+  $form['configuration']['lang'] = array(
+    '#type'  => 'textfield',
+    '#title' => t('Language'),
+    '#description' => t('Enter an <a href="@language-codes">ISO 639-1 language code</a>. Only tweets written in the specified language will be displayed. Note that Twitter only supports a limited number of languages (see the Twitter <a href="@search-page">advanced search page</a> for a list of currently supported languages). Leave blank to display tweets from all languages.', array('@language-codes' => 'http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes', '@search-page' => 'http://twitter.com/search-advanced')),
+    '#default_value' => $edit['lang'],
+    '#size' => 2,
+    '#maxlength' => 2,
+  );
+  $form['configuration']['results_per_page'] = array(
+    '#type' => 'select',
+    '#title' => t('Tweets'),
+    '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100)),
+    '#default_value' => $edit['results_per_page'],
+    '#description' => t('Select the number of tweets to display.'),
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function twitter_block_block_save($delta = 0, $edit = array()) {
+  twitter_block_custom_block_save($edit, $delta);
+}
+
+/**
+ * Saves a user-created Twitter block in the database.
+ *
+ * @param $edit
+ *   Associative array of fields to save. Array keys:
+ *   - info: Block description.
+ *   - search_type: Type of search to perform.
+ *   - include_rts: Whether to include retweets.
+ *   - search_string: String to search for.
+ *   - results_per_page: Number of tweets to display.
+ *   - lang: Language to restrict tweets to.
+ * @param $delta
+ *   Block ID of the block to save.
+ *
+ * @return
+ *   Always returns TRUE.
+ */
+function twitter_block_custom_block_save($edit, $delta) {
+  db_update('twitter_block')
+    ->fields(array(
+      'info' => $edit['info'],
+      'search_type' => $edit['search_type'],
+      'include_rts' => $edit['include_rts'],
+      'search_string' => $edit['search_string'],
+      'results_per_page' => $edit['results_per_page'],
+      'lang' => $edit['lang'],
+    ))
+    ->condition('bid', $delta)
+    ->execute();
+  return TRUE;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function twitter_block_block_view($delta) {
+  // Load the configuration.
+  $config = twitter_block_block_get($delta);
+
+  // Use the MD5 of the block config as the cache cid.
+  $cid = 'twitter_block_feed_' . md5(serialize($config));
+  $cache_bin = 'cache';
+
+  // Build the object.
+  $twitter = new TwitterBlockSearch($config);
+  $response = $twitter->getJSON();
+  $results = array();
+  if (empty($response) || !is_array($response) || !isset($response['status']) || $response['status'] !== TRUE) {
+    watchdog('Twitter Block', 'Recieved an unexpected reply from Twitter. ' .
+      'Perhaps just a fail whale?<br/>' .
+      'URL: url_query<br />' .
+      'response', array('url_query' => $twitter->url_query, 'response' => print_r($response, TRUE)),
+      WATCHDOG_NOTICE);
+  }
+  else {
+    $results = $response['results'];
+  }
+
+  // Create a variable to hold the tweets.
+  $tweets = array();
+
+  // Theme each of the returned tweets.
+  foreach ($results as $tweet) {
+    $tweets[] = theme('twitter_block_tweet', array('tweet' => $tweet, 'api' => $twitter->getApi()));
+  }
+
+  $block = array();
+  $block['subject'] = check_plain($config['info']);
+  $block['content'] = array(
+    '#theme' => 'item_list',
+    '#items' => $tweets,
+    '#attached' => array(
+      'css' => array(
+        drupal_get_path('module', 'twitter_block') . '/twitter_block.css',
+      ),
+    ),
+  );
+
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function twitter_block_theme($existing, $type , $theme, $path) {
+  return array(
+    'twitter_block_tweet' => array(
+      'variables' => array('tweet' => NULL, 'api' => NULL),
+      'path' => drupal_get_path('module', 'twitter_block'),
+      'template' => 'twitter-block-tweet',
+    ),
+  );
+}
+
+/**
+ * Implements hook_preprocess().
+ */
+function twitter_block_preprocess_twitter_block_tweet(&$variables) {
+  $variables['text'] = twitter_block_linkify($variables['tweet']->text);
+  $variables['date'] = format_date(strtotime($variables['tweet']->created_at));
+  $variables['user_image'] = ($variables['api'] == 'rest') ? $variables['tweet']->user->profile_image_url : $variables['tweet']->profile_image_url;
+  $variables['name'] = ($variables['api'] == 'rest') ? $variables['tweet']->user->name : $variables['tweet']->from_user_name;
+  $variables['screen_name'] = ($variables['api'] == 'rest') ? $variables['tweet']->user->screen_name : $variables['tweet']->from_user;
+}
+
+/**
+ * Convert nested URLs, account names and hash tags into links.
+ */
+function twitter_block_linkify($status_text) {
+  // Linkify URLs.
+  $status_text = preg_replace(
+    '/(https?:\/\/\S+)/',
+    '<a href="\1">\1</a>',
+    $status_text
+  );
+
+  // Linkify twitter users.
+  $status_text = preg_replace(
+    '/(^|\s)@(\w+)/',
+    '\1@<a href="http://twitter.com/\2">\2</a>',
+    $status_text
+  );
+
+  // Linkify tags.
+  $status_text = preg_replace(
+    '/(^|\s)#([\wåäöÅÄÖ]+)/',
+    '\1#<a href="http://search.twitter.com/search?q=%23\2">\2</a>',
+    $status_text
+  );
+
+  return $status_text;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function twitter_block_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools') {
+    return 'plugins/' . $plugin;
+  }
+}

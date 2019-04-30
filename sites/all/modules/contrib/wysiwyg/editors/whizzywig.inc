@@ -16,23 +16,16 @@ function wysiwyg_whizzywig_editor() {
     'libraries' => array(
       '' => array(
         'title' => 'Default',
-        'files' => array('whizzywig.js'),
+        'files' => array('whizzywig.js', 'xhtml.js'),
       ),
     ),
-    'verified version range' => array('55', '63'),
     'version callback' => 'wysiwyg_whizzywig_version',
     'settings form callback' => 'wysiwyg_whizzywig_settings_form',
     'settings callback' => 'wysiwyg_whizzywig_settings',
-    'plugin callback' => '_wysiwyg_whizzywig_plugins',
+    'plugin callback' => 'wysiwyg_whizzywig_plugins',
     'versions' => array(
       '55' => array(
         'js files' => array('whizzywig.js'),
-        'libraries' => array(
-          '' => array(
-            'title' => 'Default',
-            'files' => array('whizzywig.js', 'xhtml.js'),
-          ),
-        ),
       ),
       '56' => array(
         'js files' => array('whizzywig-56.js'),
@@ -128,11 +121,7 @@ function wysiwyg_whizzywig_settings($editor, $config, $theme) {
       }
     }
     elseif ($config['css_setting'] == 'self' && isset($config['css_path'])) {
-      $settings['externalCSS'] = strtr($config['css_path'], array(
-        '%b' => base_path(),
-        '%t' => drupal_get_path('theme', variable_get('theme_default', NULL)),
-        '%q' => variable_get('css_js_query_string', ''),
-      ));
+      $settings['externalCSS'] = strtr($config['css_path'], array('%b' => base_path(), '%t' => drupal_get_path('theme', variable_get('theme_default', NULL))));
     }
   }
 
@@ -142,7 +131,7 @@ function wysiwyg_whizzywig_settings($editor, $config, $theme) {
 /**
  * Return internal plugins for this editor; semi-implementation of hook_wysiwyg_plugin().
  */
-function _wysiwyg_whizzywig_plugins($editor) {
+function wysiwyg_whizzywig_plugins($editor) {
   return array(
     'default' => array(
       'buttons' => array(

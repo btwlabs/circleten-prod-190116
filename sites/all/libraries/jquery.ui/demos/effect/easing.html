@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>jQuery UI Effects - Easing demo</title>
-	<link rel="stylesheet" href="../../themes/base/all.css">
+	<link rel="stylesheet" href="../../themes/base/jquery.ui.all.css">
+	<script src="../../jquery-1.8.2.js"></script>
+	<script src="../../ui/jquery.effects.core.js"></script>
 	<link rel="stylesheet" href="../demos.css">
 	<style>
 	.graph {
@@ -12,8 +13,8 @@
 		margin-left: 10px;
 	}
 	</style>
-	<script src="../../external/requirejs/require.js"></script>
-	<script src="../bootstrap.js">
+	<script>
+	$(function() {
 		if ( !$( "<canvas>" )[0].getContext ) {
 			$( "<div>" ).text(
 				"Your browser doesn't support canvas, which is required for this demo."
@@ -34,11 +35,11 @@
 			canvas.width = width;
 			canvas.height = height;
 			var drawHeight = height * 0.8,
-				cradius = 10,
+				cradius = 10;
 				ctx = canvas.getContext( "2d" );
 			ctx.fillStyle = "black";
 
-			// Draw background
+			// draw background
 			ctx.beginPath();
 			ctx.moveTo( cradius, 0 );
 			ctx.quadraticCurveTo( 0, 0, 0, cradius );
@@ -50,21 +51,21 @@
 			ctx.lineTo( cradius, 0 );
 			ctx.fill();
 
-			// Draw bottom line
+			// draw bottom line
 			ctx.strokeStyle = "#555";
 			ctx.beginPath();
 			ctx.moveTo( width * 0.1, drawHeight + .5 );
 			ctx.lineTo( width * 0.9, drawHeight + .5 );
 			ctx.stroke();
 
-			// Draw top line
+			// draw top line
 			ctx.strokeStyle = "#555";
 			ctx.beginPath();
 			ctx.moveTo( width * 0.1, drawHeight * .3 - .5 );
 			ctx.lineTo( width * 0.9, drawHeight * .3 - .5 );
 			ctx.stroke();
 
-			// Plot easing
+			// plot easing
 			ctx.strokeStyle = "white";
 			ctx.beginPath();
 			ctx.lineWidth = 2;
@@ -77,8 +78,8 @@
 			});
 			ctx.stroke();
 
-			// Animate on click
-			graph.on( "click", function() {
+			// animate on click
+			graph.click(function() {
 				wrap
 					.animate( { height: "hide" }, 2000, name )
 					.delay( 800 )
@@ -87,14 +88,22 @@
 
 			graph.width( width ).height( height + text.height() + 10 );
 		});
+	});
 	</script>
 </head>
 <body>
 
+<div class="demo">
+
 <div id="graphs"></div>
 
+</div><!-- End demo -->
+
+
+
 <div class="demo-description">
-<p><strong>All easings provided by jQuery UI are drawn above, using an HTML canvas element</strong>. Click a diagram to see the easing in action.</p>
-</div>
+<p><strong>All easings provided by jQuery UI are drawn above, using a HTML canvas element</strong>. Click a diagram to see the easing in action.</p>
+</div><!-- End demo-description -->
+
 </body>
 </html>

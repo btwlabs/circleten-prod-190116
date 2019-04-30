@@ -1,12 +1,7 @@
 <?php
 
-sleep( 2 );
-// no term passed - just exit early with no response
-if (empty($_GET['term'])) exit ;
 $q = strtolower($_GET["term"]);
-// remove slashes if they were magically added
-if (get_magic_quotes_gpc()) $q = stripslashes($q);
-
+if (!$q) return;
 $items = array(
 "Great Bittern"=>"Botaurus stellaris",
 "Little Grebe"=>"Tachybaptus ruficollis",
@@ -368,6 +363,7 @@ $items = array(
 "Glossy Ibis"=>"Plegadis falcinellus",
 "Spanish Imperial Eagle"=>"Aquila adalberti",
 "Lesser Kestrel"=>"Falco naumanni",
+"Houbara Bustard"=>"Chlamydotis undulata",
 "Crab-Plover"=>"Dromas ardeola",
 "Cream-coloured Courser"=>"Cursorius cursor",
 "Collared Pratincole"=>"Glareola pratincola",
@@ -573,6 +569,64 @@ $items = array(
 "Heuglin's Gull"=>"Larus heuglini"
 );
 
+function array_to_json( $array ){
+
+    if( !is_array( $array ) ){
+        return false;
+    }
+
+    $associative = count( array_diff( array_keys($array), array_keys( array_keys( $array )) ));
+    if( $associative ){
+
+        $construct = array();
+        foreach( $array as $key => $value ){
+
+            // We first copy each key/value pair into a staging array,
+            // formatting each key and value properly as we go.
+
+            // Format the key:
+            if( is_numeric($key) ){
+                $key = "key_$key";
+            }
+            $key = "\"".addslashes($key)."\"";
+
+            // Format the value:
+            if( is_array( $value )){
+                $value = array_to_json( $value );
+            } else if( !is_numeric( $value ) || is_string( $value ) ){
+                $value = "\"".addslashes($value)."\"";
+            }
+
+            // Add to staging array:
+            $construct[] = "$key: $value";
+        }
+
+        // Then we collapse the staging array into the JSON form:
+        $result = "{ " . implode( ", ", $construct ) . " }";
+
+    } else { // If the array is a vector (not associative):
+
+        $construct = array();
+        foreach( $array as $value ){
+
+            // Format the value:
+            if( is_array( $value )){
+                $value = array_to_json( $value );
+            } else if( !is_numeric( $value ) || is_string( $value ) ){
+                $value = "'".addslashes($value)."'";
+            }
+
+            // Add to staging array:
+            $construct[] = $value;
+        }
+
+        // Then we collapse the staging array into the JSON form:
+        $result = "[ " . implode( ", ", $construct ) . " ]";
+    }
+
+    return $result;
+}
+
 $result = array();
 foreach ($items as $key=>$value) {
 	if (strpos(strtolower($key), $q) !== false) {
@@ -581,17 +635,6 @@ foreach ($items as $key=>$value) {
 	if (count($result) > 11)
 		break;
 }
-
-// json_encode is available in PHP 5.2 and above, or you can install a PECL module in earlier versions
-$output = json_encode($result);
-
-if ($_GET["callback"]) {
-	// Escape special characters to avoid XSS attacks via direct loads of this
-	// page with a callback that contains HTML. This is a lot easier than validating
-	// the callback name.
-	$output = htmlspecialchars($_GET["callback"]) . "($output);";
-}
-
-echo $output;
+echo array_to_json($result);
 
 ?>

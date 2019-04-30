@@ -1,24 +1,25 @@
 <?php
 
+
 /**
  * @file
  * All of the filter handling code needed for Backup and Migrate.
  */
 
 /**
- * Gets the available destination types.
+ * Get the available destination types.
  */
 function backup_migrate_get_filters($op = NULL) {
-  $filters = &drupal_static('backup_migrate_get_filters', NULL);
+  static $filters = NULL;
   if ($filters === NULL) {
     $filters = array();
     $definitions = module_invoke_all('backup_migrate_filters');
     foreach ($definitions as $definition) {
       // Include the necessary file if specified by the filter.
       if (!empty($definition['file'])) {
-        require_once './' . $definition['file'];
+        require_once './'. $definition['file'];
       }
-      $filters[] = new $definition['class']();
+      $filters[] = new $definition['class'];
     }
   }
   $sort = array();
@@ -31,37 +32,37 @@ function backup_migrate_get_filters($op = NULL) {
 }
 
 /**
- * Implements hook_backup_migrate_filters().
+ * Implementation of hook_backup_migrate_filters().
  *
  * Get the built in Backup and Migrate filters.
  */
 function backup_migrate_backup_migrate_filters() {
   return array(
     'backup_restore' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') . '/includes/filters.backup_restore.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.backup_restore.inc',
       'class' => 'backup_migrate_filter_backup_restore',
     ),
     'compression' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') . '/includes/filters.compression.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.compression.inc',
       'class' => 'backup_migrate_filter_compression',
     ),
     'encryption' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') . '/includes/filters.encryption.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.encryption.inc',
       'class' => 'backup_migrate_filter_encryption',
     ),
     'statusnotify' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') . '/includes/filters.statusnotify.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.statusnotify.inc',
       'class' => 'backup_migrate_filter_statusnotify',
     ),
     'utils' => array(
-      'file' => drupal_get_path('module', 'backup_migrate') . '/includes/filters.utils.inc',
+      'file' => drupal_get_path('module', 'backup_migrate') .'/includes/filters.utils.inc',
       'class' => 'backup_migrate_filter_utils',
     ),
   );
 }
 
 /**
- * Invokes the given method on all of the available filters.
+ * Invoke the given method on all of the available filters.
  */
 function backup_migrate_filters_invoke_all() {
   $args    = func_get_args();
@@ -95,47 +96,42 @@ function backup_migrate_filters_invoke_all() {
 }
 
 /**
- * Filters a backup file before sending it to the destination.
+ * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_backup($file, &$settings) {
-  backup_migrate_filters_invoke_all('pre_backup', $file, $settings);
   $filters = backup_migrate_get_filters('backup');
   foreach ($filters as $filter) {
     if ($file) {
       $file = $filter->backup($file, $settings);
     }
   }
-  backup_migrate_filters_invoke_all('post_backup', $file, $settings);
-
   return $file;
 }
 
 /**
- * Filters a backup file before sending it to the destination.
+ * Filter a backup file before sending it to the destination.
  */
 function backup_migrate_filters_restore($file, &$settings) {
-  backup_migrate_filters_invoke_all('pre_restore', $file, $settings);
   $filters = backup_migrate_get_filters('restore');
   foreach ($filters as $filter) {
     if ($file) {
       $file = $filter->restore($file, $settings);
     }
   }
-  backup_migrate_filters_invoke_all('post_restore', $file, $settings);
   return $file;
 }
 
 /**
- * Gets the backup settings for all of the filters.
+ * Get the backup settings for all of the filters.
  */
 function backup_migrate_filters_settings_form($settings, $op) {
-  $out = backup_migrate_filters_invoke_all($op . '_settings_form', $settings);
+  $out = backup_migrate_filters_invoke_all($op .'_settings_form', $settings);
   $out = backup_migrate_filters_settings_form_set_parents($out);
   return $out;
 }
 
 /**
- * Adds form parent to filter settings so the values are saved in correct table.
+ * Add a form parent to the filter settings so that the filter values are saved in the right table.
  */
 function backup_migrate_filters_settings_form_set_parents($form) {
   foreach (element_children($form) as $key) {
@@ -147,51 +143,27 @@ function backup_migrate_filters_settings_form_set_parents($form) {
   return $form;
 }
 
+
 /**
- * Validates all the filters.
+ * Validate all the filters.
  */
 function backup_migrate_filters_settings_form_validate($op, $form, &$form_state) {
-  backup_migrate_filters_invoke_all($op . '_settings_form_validate', $form, $form_state);
+  //backup_migrate_filters_invoke_all($op .'_settings_form_validate', $form, $form_state);
 }
 
 /**
- * Submits all of the filters.
+ * Submit all of the filters.
  */
 function backup_migrate_filters_settings_form_submit($op, $form, &$form_state) {
-  backup_migrate_filters_invoke_all($op . '_settings_form_submit', $form, $form_state);
+  //backup_migrate_filters_invoke_all($op .'_settings_form_submit', $form, $form_state);
 }
 
+
 /**
- * Gets the default settings for the filters.
+ * Get the default settings for the filters.
  */
 function backup_migrate_filters_settings_default($op) {
-  return backup_migrate_filters_invoke_all($op . '_settings_default');
-}
-
-/**
- * Get the backup settings for all of the filters.
- */
-function backup_migrate_filters_before_action_form($settings, $op) {
-  $out = array();
-  $out += backup_migrate_filters_invoke_all('before_action_form', $op, $settings);
-  $out += backup_migrate_filters_invoke_all('before_' . $op . '_form', $settings);
-  return $out;
-}
-
-/**
- * Get the backup settings for all of the filters.
- */
-function backup_migrate_filters_before_action_form_validate($settings, $op, $form, &$form_state) {
-  backup_migrate_filters_invoke_all('before_action_form_validate', $op, $settings, $form, $form_state);
-  backup_migrate_filters_invoke_all('before_' . $op . '_form_validate', $settings, $form, $form_state);
-}
-
-/**
- * Get the backup settings for all of the filters.
- */
-function backup_migrate_filters_before_action_form_submit($settings, $op, $form, &$form_state) {
-  backup_migrate_filters_invoke_all('before_action_form_submit', $op, $settings, $form, $form_state);
-  backup_migrate_filters_invoke_all('before_' . $op . '_form_submit', $settings, $form, $form_state);
+  return backup_migrate_filters_invoke_all($op .'_settings_default');
 }
 
 /**
@@ -205,13 +177,13 @@ function backup_migrate_filters_file_types() {
  * A base class for basing filters on.
  */
 class backup_migrate_filter {
-  public $weight = 0;
-  public $op_weights = array();
+  var $weight = 0;
+  var $op_weights = array();
 
   /**
    * Get the weight of the filter for the given op.
    */
-  public function weight($op = NULL) {
+  function weight($op = NULL) {
     if ($op && isset($this->op_weights[$op])) {
       return $this->op_weights[$op];
     }
@@ -221,110 +193,98 @@ class backup_migrate_filter {
   /**
    * Get the form for the settings for this filter.
    */
-  public function backup_settings_default() {
+  function backup_settings_default() {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  public function backup_settings_form($settings) {
+  function backup_settings_form($settings) {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  public function backup_settings_form_validate($form, &$form_state) {
+  function backup_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  public function backup_settings_form_submit($form, &$form_state) {
+  function backup_settings_form_submit($form, &$form_state) {
+    return $form_state['values'];
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  public function restore_settings_default() {
+  function restore_settings_default() {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  public function restore_settings_form($settings) {
+  function restore_settings_form($settings) {
     return array();
   }
 
   /**
    * Get the form for the settings for this filter.
    */
-  public function restore_settings_form_validate($form, &$form_state) {
+  function restore_settings_form_validate($form, &$form_state) {
   }
 
   /**
    * Submit the settings form. Any values returned will be saved.
    */
-  public function restore_settings_form_submit($form, &$form_state) {
+  function restore_settings_form_submit($form, &$form_state) {
     return $form_state['values'];
   }
 
   /**
    * Get a list of file types handled by this filter.
    */
-  public function file_types() {
+  function file_types() {
     return array();
   }
 
   /**
    * Declare any default destinations for this filter.
    */
-  public function destinations() {
+  function destinations() {
     return array();
   }
 
+
   /**
-   * Called on a backup file after the backup has been completed.
+   * This function is called on a backup file after the backup has been completed.
    */
-  public function backup($file, $settings) {
+  function backup($file, &$settings) {
+    return $file;
+  }
+
+  /**
+   * This function is called on a backup file before importing it.
+   */
+  function restore($file, &$settings) {
     return $file;
   }
 
   /**
    * This function is called immediately prior to backup.
    */
-  public function pre_backup($file, $settings) {
+  function pre_backup($source, $file, $settings) {
 
   }
 
   /**
    * This function is called immediately post backup.
    */
-  public function post_backup($file, $settings) {
+  function post_backup($source, $file, $settings) {
 
   }
-
-  /**
-   * This function is called on a backup file before importing it.
-   */
-  public function restore($file, $settings) {
-    return $file;
-  }
-
-  /**
-   * This function is called immediately prior to restore.
-   */
-  public function pre_restore($file, $settings) {
-
-  }
-
-  /**
-   * This function is called immediately post restore.
-   */
-  public function post_restore($file, $settings) {
-
-  }
-
 }
+

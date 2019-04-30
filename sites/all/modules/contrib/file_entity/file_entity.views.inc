@@ -109,14 +109,10 @@ function file_entity_views_data() {
     'help' => t('Provide a simple link to view the usage of the file entity.'),
     'field' => array(
       'handler' => 'views_handler_field_file_link_usage',
-      'click sortable' => TRUE,
       'real field' => 'fid',
       'additional fields' => array(
         'fid',
       ),
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
     ),
   );
 
@@ -160,15 +156,5 @@ function file_entity_views_plugins() {
         'help topic' => 'style-file-rss',
       ),
     ),
-  );
-}
-
-/**
- * Implements hook_views_query_substitutions().
- */
-function file_entity_views_query_substitutions() {
-  return array(
-    '***ADMINISTER_FILES***' => intval(user_access('administer files')),
-    '***BYPASS_FILE_ACCESS***' =>  intval(user_access('bypass file access')),
   );
 }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Folder manipulation functions.
@@ -102,7 +101,7 @@ function media_browser_plus_move_subfolder($folder, $source, $destination) {
       // This will move all subfolders too. Thus we have to handle all child
       // folder terms as well.
       file_prepare_directory($destination_path, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-      media_browser_plus_move_physical_folder($source_path, $destination_path, $scheme);
+      media_browser_plus_move_physical_folder($source_path, $destination_path);
     }
     // @todo This could move into the condition, but this way it's more stable.
     // Update files in folder and subfolders get folders.
@@ -145,7 +144,7 @@ function media_browser_plus_folder_update_file_locations_batch($folders, &$conte
   if (empty($context['sandbox'])) {
     $context['sandbox']['progress'] = 0;
     $files = $file_query->execute();
-    $context['sandbox']['max'] = (!empty($files['file'])) ? count($files['file']) : 0;
+    $context['sandbox']['max'] = (!empty($files['file'])) ?  count($files['file']) : 0;
     $context['local_stream_wrappers'] = media_get_local_stream_wrappers();
   }
   if (!isset($context['results'])) {
@@ -200,19 +199,14 @@ function media_browser_plus_folder_update_file_locations_batch($folders, &$conte
  *   The current path.
  * @param string $destination
  *   The new path.
- * @param string $scheme
- *   The scheme to handle.
  *
  * @return bool
  *   TRUE on success.
  */
-function media_browser_plus_move_physical_folder($source, $destination, $scheme = NULL) {
-  if (!$scheme) {
-    $scheme = variable_get('file_default_scheme', 'public');
-  }
+function media_browser_plus_move_physical_folder($source, $destination) {
   $destination = drupal_realpath($destination);
   $source = drupal_realpath($source);
-  $jail = drupal_realpath($scheme . '://');
+  $jail = drupal_realpath(variable_get('file_default_scheme', 'public') . '://');
   $files = @scandir($source);
   if ($files && count($files) > 2) {
     $transfer = new FileTransferLocal($jail);
@@ -222,7 +216,7 @@ function media_browser_plus_move_physical_folder($source, $destination, $scheme 
     foreach ($files as $file) {
       if (!in_array($file, array('.', '..'))) {
         $source_path = $source . DIRECTORY_SEPARATOR . $file;
-        $copy_destination = $destination . DIRECTORY_SEPARATOR . $file;
+        $copy_destination =  $destination . DIRECTORY_SEPARATOR . $file;
         if (is_file($source_path)) {
           $transfer->copyFile($source_path, $copy_destination);
           $transfer->removeFile($source_path);
@@ -245,6 +239,7 @@ function media_browser_plus_move_physical_folder($source, $destination, $scheme 
   }
   return TRUE;
 }
+
 
 /**
  * Rebuilds the folder structure on the disk.

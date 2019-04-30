@@ -1,10 +1,14 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>jQuery UI Resizable - Constrain resize area</title>
-	<link rel="stylesheet" href="../../themes/base/all.css">
+	<link rel="stylesheet" href="../../themes/base/jquery.ui.all.css">
+	<script src="../../jquery-1.8.2.js"></script>
+	<script src="../../ui/jquery.ui.core.js"></script>
+	<script src="../../ui/jquery.ui.widget.js"></script>
+	<script src="../../ui/jquery.ui.mouse.js"></script>
+	<script src="../../ui/jquery.ui.resizable.js"></script>
 	<link rel="stylesheet" href="../demos.css">
 	<style>
 	#container { width: 300px; height: 300px; }
@@ -12,15 +16,18 @@
 	#resizable { background-position: top left; width: 150px; height: 150px; }
 	#resizable, #container { padding: 0.5em; }
 	</style>
-	<script src="../../external/requirejs/require.js"></script>
-	<script src="../bootstrap.js">
+	<script>
+	$(function() {
 		$( "#resizable" ).resizable({
 			containment: "#container"
 		});
+	});
 	</script>
 </head>
 <body>
 
+<div class="demo">
+	
 <div id="container" class="ui-widget-content">
 	<h3 class="ui-widget-header">Containment</h3>
 	<div id="resizable" class="ui-state-active">
@@ -28,8 +35,13 @@
 	</div>
 </div>
 
+</div><!-- End demo -->
+
+
+
 <div class="demo-description">
 <p>Define the boundaries of the resizable area. Use the <code>containment</code> option to specify a parent DOM element or a jQuery selector, like 'document.'</p>
-</div>
+</div><!-- End demo-description -->
+
 </body>
 </html>

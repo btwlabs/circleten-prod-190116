@@ -9,9 +9,9 @@
  * Places one image over another.
  *
  * @param stdClass $image
- *   A valid image object.
+ *   An image object.
  * @param stdClass  $layer
- *   A valid image object to be placed over or under the $image image.
+ *   Image object to be placed over or under the $image image.
  * @param int $x
  *   Position of the overlay.
  * @param int $y
@@ -103,24 +103,10 @@ function image_gd_overlay(stdClass $image, stdClass $layer, $x, $y, $alpha = 100
 }
 
 /**
- * Imagemagick toolkit specific implementation of the image overlay effect.
+ * imagemagick toolkit specific implementation of the image overlay effect.
  *
- * An underlay should can be created like:
- * -background None -extent 300x250-50-50 under.jpg -compose dst-over -composite
- *
- * Explanation:
- * - first enlarge the canvas, making any new part fully transparent.
- * - placing the "original" image on its requested position
- * - define the "source" image to IM
- * - compose the images placing the original over the source
- *
- * An overlay can be created like:
- * overlay.png -geometry 50x50+100+75 -compose  src-over -composite
- *
- * Explanation:
- * - define the overlay image to IM
- * - and define its size and position on the current image
- * - compose the images placing the original over the source
+ * @todo: is this comment still valid?
+ * Improvements on this are welcomed!
  *
  * Please be aware of the limitations of imagemagick libraries out there - the
  * versions distributed on hosted servers (if any) are often several years
@@ -145,11 +131,6 @@ function image_gd_overlay(stdClass $image, stdClass $layer, $x, $y, $alpha = 100
  *   true on success, false otherwise.
  */
 function image_imagemagick_overlay(stdClass $image, stdClass $layer, $x = 0, $y = 0, $alpha = 100, $reverse = FALSE) {
-  $realPath = imagecache_actions_find_file($layer->source);
-  if (!$realPath) {
-    return FALSE;
-  }
-
   // Reset any gravity settings from earlier effects.
   $image->ops[] = '-gravity None';
 
@@ -157,14 +138,16 @@ function image_imagemagick_overlay(stdClass $image, stdClass $layer, $x = 0, $y 
   // - $image is the destination (the image being constructed)
   // - $layer is the source (the source of the current operation)
   // Add the layer image to the imagemagick command line.
+  $image->ops[] = escapeshellarg($layer->source) . ' ';
 
-  // Set the dimensions of the overlay. Use of the scale option means that we
-  // need to change the dimensions: always set them, they don't harm when the
-  // scale option is not used.
-  $sign = $reverse ? -1 : 1;
-  $geometry = sprintf('%ux%u%+d%+d', $layer->info['width'], $layer->info['height'], $sign * $x, $sign * $y);
-
-  $compose_operator = $reverse ? 'dst-over' : 'src-over';
+  // Set its offset. Offset arguments require a sign in front.
+  if ($x >= 0) {
+    $x = "+$x";
+  }
+  if ($y >= 0) {
+    $y = "+$y";
+  }
+  $image->ops[] = "-geometry $x$y";
 
   // And compose it with the destination.
   if ($alpha == 100) {
@@ -176,15 +159,10 @@ function image_imagemagick_overlay(stdClass $image, stdClass $layer, $x = 0, $y 
     //   previously set one (former versions could produce erroneous results
     //   in combination with other effects before this one).
     if ($reverse) {
-      // Underlay.
-      $image->ops[] = '-background';
-      $image->ops[] = escapeshellarg('rgba(0,0,0,0)');
-      $image->ops[] = "-extent $geometry";
-      $image->ops[] = escapeshellarg($realPath);
+      $compose_operator = 'dst-over';
     }
     else {
-      $image->ops[] = escapeshellarg($realPath);
-      $image->ops[] = "-geometry $geometry";
+      $compose_operator = 'src-over';
     }
     $image->ops[] = "-compose $compose_operator -composite";
   }
@@ -197,8 +175,6 @@ function image_imagemagick_overlay(stdClass $image, stdClass $layer, $x = 0, $y 
     //   used in or after the blend operation.
     // Note 2: As of IM v6.5.3-4 (around june 2009) we can use:
     //   -compose blend -define compose:args=30[,70]
-    $image->ops[] = escapeshellarg($realPath);
-    $image->ops[] = "-geometry $geometry";
     $image->ops[] = "-compose blend -define compose:args=$alpha -composite";
   }
   return TRUE;

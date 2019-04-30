@@ -12,10 +12,6 @@ function user_profiler_components() {
       'callback' => 'profiler_install_users',
       'weight' => -10,
     ),
-    'roles' => array(
-      'callback' => 'profiler_install_roles',
-      'weight' => -15,
-    ),
   );
 }
 
@@ -41,29 +37,5 @@ function profiler_install_users($users) {
     $account = isset($array['uid']) ? user_load($array['uid']) : user_load_by_name($array['name']);
     $account = $account ? $account : new stdClass();
     $account = user_save($account, $array);
-  }
-}
-
-/**
- * Component install callback for 'roles'.
- */
-function profiler_install_roles($roles) {
-  foreach (array_filter($roles) as $role_data) {
-    // Create the role object.
-    $role = new stdClass();
-
-    // Allow simple strings and arrays with name and weight.
-    if (is_array($role_data)){
-      $role->name = $role_data['name'];
-      if (isset($role_data['weight'])) {
-        $role->weight = $role_data['weight'];
-      }
-    }
-    else {
-      $role->name = $role_data;
-    }
-
-    // Save the role.
-    user_role_save($role);
   }
 }

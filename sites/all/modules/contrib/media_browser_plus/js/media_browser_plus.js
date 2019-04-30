@@ -1,11 +1,11 @@
-/**!
+/*!
  * jQuery lightweight plugin boilerplate
  * Original author: @ajpiano
  * Further changes, comments: @addyosmani
  * Licensed under the MIT license
  * http://coding.smashingmagazine.com/2011/10/11/essential-jquery-plugin-patterns/
- **/
- ;(function ($, window, document, undefined) {
+ */
+;(function ( $, window, document, undefined ) {
   // Create the defaults once
   var pluginName = 'mbp',
     defaults = {
@@ -185,7 +185,7 @@
         window.setTimeout(function(){
           $('.mbp-file-basket-list li', plugin.element).trigger('click');
         }, 1000);
-        window.location.href = this.getBasePath() + 'admin/content/file/download-multiple/' + $('input[name=mbp_basket_files]', plugin.element).val();
+        window.location.href = Drupal.settings.basePath + Drupal.settings.pathPrefix + 'admin/content/file/download-multiple/' + $('input[name=mbp_basket_files]', plugin.element).val();
       });
 
       if (this.options.files_draggable) {
@@ -209,9 +209,6 @@
             .attr('checked', !$(this).find('input.vbo-select').attr('checked'))
             .trigger('change');
         }
-      })
-      .bind('dblclick.mbp', function(e) {
-        plugin['editFiles']($(this).find('input.vbo-select').val());
       });
     $('.mbp-file-list li input.vbo-select', this.element)
       .bind('change.mbp', function(e) {
@@ -269,25 +266,6 @@
     $('.mbp-action-', this.element).unbind('.mbp');
   };
 
-  /**
-   * Returns the proper Drupal path to use as destination parameter.
-   */
-  MBP.prototype.getDestinationPath = function () {
-    var path = window.location.pathname;
-    path = path.replace(new RegExp('^' + Drupal.settings.basePath.replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1')), '');
-    if (Drupal.settings.pathPrefix.length) {
-      path = path.replace(new RegExp('^' + Drupal.settings.pathPrefix.replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1')), '');
-    }
-    return path;
-  };
-
-  /**
-   * Returns the proper Drupal path to navigate with.
-   */
-  MBP.prototype.getBasePath = function (path) {
-    return Drupal.settings.basePath + Drupal.settings.pathPrefix;
-  };
-
   MBP.prototype.folderOpen = function(folder) {
     $(folder)
       .addClass('open')
@@ -323,7 +301,7 @@
   MBP.prototype.deleteFiles = function () {
     var fids = this.getSelectedFiles();
     if (fids.length) {
-      window.location.href = this.getBasePath() + 'admin/content/file/delete-multiple/' + fids.join(' ') + '?destination=' + this.getDestinationPath();
+      window.location.href = Drupal.settings.basePath + Drupal.settings.pathPrefix + 'admin/content/file/delete-multiple/' + fids.join(' ');
     }
   }
 
@@ -337,23 +315,17 @@
     }
   }
 
-  MBP.prototype.editFiles = function (fileId) {
+  MBP.prototype.editFiles = function () {
     var fids = this.getSelectedFiles();
-    if (typeof(fileId) != 'undefined') {
-      fids = [fileId];
-    }
-    if (fids.length > 1) {
-      window.location.href = this.getBasePath()+ 'admin/content/file/edit-multiple/' + fids.join(' ') + '?destination=' + this.getDestinationPath();
-    }
-    else if (fids.length == 1) {
-      window.location.href = this.getBasePath() + 'file/' + fids[0] + '/edit?destination=' + this.getDestinationPath();
+    if (fids.length) {
+      window.location.href = Drupal.settings.basePath + Drupal.settings.pathPrefix + 'admin/content/file/edit-multiple/' + fids.join(' ');
     }
   }
 
   MBP.prototype.downloadFiles = function () {
     var fids = this.getSelectedFiles();
     if (fids.length) {
-      window.location.href = this.getBasePath() + 'admin/content/file/download-multiple/' + fids.join(' ');
+      window.location.href = Drupal.settings.basePath + Drupal.settings.pathPrefix + 'admin/content/file/download-multiple/' + fids.join(' ');
     }
   }
 

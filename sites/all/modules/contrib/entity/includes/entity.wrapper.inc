@@ -119,11 +119,7 @@ abstract class EntityMetadataWrapper {
    */
   public function set($value) {
     if (!$this->validate($value)) {
-      throw new EntityMetadataWrapperException(t('Invalid data value given. Be sure it matches the required data type and format. Value at !location: !value.', array(
-        // An exception's message is output through check_plain().
-        '!value' => is_array($value) || is_object($value) ? var_export($value, TRUE) : $value,
-        '!location' => $this->debugIdentifierLocation(),
-      )));
+      throw new EntityMetadataWrapperException('Invalid data value given. Be sure it matches the required data type and format.');
     }
     $this->clear();
     $this->data = $value;
@@ -233,21 +229,6 @@ abstract class EntityMetadataWrapper {
    */
   public function access($op, $account = NULL) {
     return !empty($this->info['parent']) ? $this->info['parent']->propertyAccess($this->info['name'], $op, $account) : TRUE;
-  }
-
-  /**
-   * Returns a string to use to identify this wrapper in error messages.
-   *
-   * @return
-   *  A string that identifies this wrapper and its chain of ancestors, of the
-   *  form 'grandparentidentifier->parentidentifier->identifier'.
-   */
-  public function debugIdentifierLocation() {
-    $debug = $this->info['name'];
-    if (isset($this->info['parent'])) {
-      $debug = $this->info['parent']->debugIdentifierLocation() . '->' . $debug;
-    }
-    return $debug;
   }
 
   /**
@@ -523,7 +504,7 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
       while (!($entity instanceof EntityDrupalWrapper) && isset($entity->info['parent'])) {
         $entity = $entity->info['parent'];
       }
-      if ($entity instanceof EntityDrupalWrapper && $entity->entityAccess('update', $account) === FALSE) {
+      if ($entity instanceof EntityDrupalWrapper && !$entity->entityAccess('update', $account)) {
         return FALSE;
       }
     }
@@ -534,7 +515,6 @@ class EntityStructureWrapper extends EntityMetadataWrapper implements IteratorAg
     elseif ($op == 'edit' && isset($info['setter permission'])) {
       return user_access($info['setter permission'], $account);
     }
-    // If access is unknown, we return TRUE.
     return TRUE;
   }
 
@@ -753,11 +733,7 @@ class EntityDrupalWrapper extends EntityStructureWrapper {
    */
   public function set($value) {
     if (!$this->validate($value)) {
-      throw new EntityMetadataWrapperException(t('Invalid data value given. Be sure it matches the required data type and format. Value at !location: !value.', array(
-        // An exception's message is output through check_plain().
-        '!value' => is_array($value) || is_object($value) ? var_export($value, TRUE) : $value,
-        '!location' => $this->debugIdentifierLocation(),
-      )));
+      throw new EntityMetadataWrapperException('Invalid data value given. Be sure it matches the required data type and format.');
     }
     if ($this->info['type'] == 'entity' && $value === $this) {
       // Nothing to do.
@@ -833,23 +809,11 @@ class EntityDrupalWrapper extends EntityStructureWrapper {
     if (!empty($this->info['parent'])) {
       // If this is a property, make sure the user is able to view the
       // currently referenced entity also.
-      if ($this->entityAccess('view', $account) === FALSE) {
-        return FALSE;
-      }
-      if (parent::access($op, $account) === FALSE) {
-        return FALSE;
-      }
-      // If access is unknown, we return TRUE.
-      return TRUE;
+      return $this->entityAccess('view', $account) && parent::access($op, $account);
     }
     else {
       // This is not a property, so fallback on entity access.
-      if ($op == 'edit') {
-        // If the operation is "edit" determine if its actually a "create" for
-        // new un-saved entities, or an "update" for existing ones.
-        return $this->entityAccess($this->getIdentifier() ? 'update' : 'create', $account);
-      }
-      return $this->entityAccess('view', $account);
+      return $this->entityAccess($op == 'edit' ? 'update' : 'view', $account);
     }
   }
 
@@ -935,27 +899,6 @@ class EntityDrupalWrapper extends EntityStructureWrapper {
     if ($entity = $this->value()) {
       return entity_label($this->type, $entity);
     }
-  }
-
-  /**
-   * Returns a string to use to identify this wrapper in error messages.
-   */
-  public function debugIdentifierLocation() {
-    // An entity wrapper can be at the top of the chain or a part of it.
-    if (isset($this->info['name'])) {
-      // This wrapper is part of a chain, eg in the position node->author.
-      // Return the name.
-      $debug = $this->info['name'];
-    }
-    else {
-      // This is a wrapper for an actual entity: return its type and id.
-      $debug = $this->info['type'] . '(' . $this->getIdentifier() . ')';
-    }
-
-    if (isset($this->info['parent'])) {
-      $debug = $this->info['parent']->debugIdentifierLocation() . '->' . $debug;
-    }
-    return $debug;
   }
 
   /**
@@ -1116,7 +1059,7 @@ class EntityListWrapper extends EntityMetadataWrapper implements IteratorAggrega
    */
   public function getIterator() {
     // In case there is no data available, just iterate over the first item.
-    return new EntityMetadataWrapperIterator($this, ($this->dataAvailable() && is_array(parent::value())) ? array_keys(parent::value()) : array(0));
+    return new EntityMetadataWrapperIterator($this, $this->dataAvailable() ? array_keys(parent::value()) : array(0));
   }
 
   /**

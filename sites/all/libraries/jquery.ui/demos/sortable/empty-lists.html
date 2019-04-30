@@ -1,17 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>jQuery UI Sortable - Handle empty lists</title>
-	<link rel="stylesheet" href="../../themes/base/all.css">
+	<link rel="stylesheet" href="../../themes/base/jquery.ui.all.css">
+	<script src="../../jquery-1.8.2.js"></script>
+	<script src="../../ui/jquery.ui.core.js"></script>
+	<script src="../../ui/jquery.ui.widget.js"></script>
+	<script src="../../ui/jquery.ui.mouse.js"></script>
+	<script src="../../ui/jquery.ui.sortable.js"></script>
 	<link rel="stylesheet" href="../demos.css">
 	<style>
-	#sortable1, #sortable2, #sortable3 { list-style-type: none; margin: 0; float: left; margin-right: 10px; background: #eee; padding: 5px; width: 143px;}
+	#sortable1, #sortable2, #sortable3 { list-style-type: none; margin: 0; padding: 0; float: left; margin-right: 10px; background: #eee; padding: 5px; width: 143px;}
 	#sortable1 li, #sortable2 li, #sortable3 li { margin: 5px; padding: 5px; font-size: 1.2em; width: 120px; }
 	</style>
-	<script src="../../external/requirejs/require.js"></script>
-	<script src="../bootstrap.js" data-modules="disable-selection">
+	<script>
+	$(function() {
 		$( "ul.droptrue" ).sortable({
 			connectWith: "ul"
 		});
@@ -22,9 +26,11 @@
 		});
 
 		$( "#sortable1, #sortable2, #sortable3" ).disableSelection();
+	});
 	</script>
 </head>
 <body>
+<div class="demo">
 
 <ul id="sortable1" class='droptrue'>
 	<li class="ui-state-default">Can be dropped..</li>
@@ -45,7 +51,11 @@
 <ul id="sortable3" class='droptrue'>
 </ul>
 
-<br style="clear:both">
+<br clear="both" />
+
+</div><!-- End demo -->
+
+
 
 <div class="demo-description">
 <p>
@@ -53,6 +63,7 @@
 	using the <code>dropOnEmpty</code> option set to <code>false</code>.  By default,
 	sortable items can be dropped on empty lists.
 </p>
-</div>
+</div><!-- End demo-description -->
+
 </body>
 </html>

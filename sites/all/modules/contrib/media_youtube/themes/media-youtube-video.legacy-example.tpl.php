@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * @file media_youtube/themes/media-youtube-video-legacy.tpl.php

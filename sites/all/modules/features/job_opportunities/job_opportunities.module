@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Job Opportunities feature.
+ */
+
+include_once 'job_opportunities.features.inc';

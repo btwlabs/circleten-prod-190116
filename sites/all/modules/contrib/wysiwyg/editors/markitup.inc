@@ -25,12 +25,11 @@ function wysiwyg_markitup_editor() {
       ),
     ),
     'install note callback' => 'wysiwyg_markitup_install_note',
-    'verified version range' => array('1.1.5', '1.1.14'),
     'version callback' => 'wysiwyg_markitup_version',
     'themes callback' => 'wysiwyg_markitup_themes',
     'settings form callback' => 'wysiwyg_markitup_settings_form',
     'settings callback' => 'wysiwyg_markitup_settings',
-    'plugin callback' => '_wysiwyg_markitup_plugins',
+    'plugin callback' => 'wysiwyg_markitup_plugins',
     'versions' => array(
       '1.1.5' => array(
         'js files' => array('markitup.js'),
@@ -189,7 +188,7 @@ function wysiwyg_markitup_settings($editor, $config, $theme) {
 /**
  * Return internal plugins for this editor; semi-implementation of hook_wysiwyg_plugin().
  */
-function _wysiwyg_markitup_plugins($editor) {
+function wysiwyg_markitup_plugins($editor) {
   return array(
     'default' => array(
       'buttons' => array(

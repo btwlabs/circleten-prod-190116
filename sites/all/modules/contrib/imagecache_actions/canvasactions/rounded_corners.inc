@@ -60,11 +60,6 @@ function canvasactions_roundedcorners_form($action) {
   $form['independent_corners_set']['radii'] = array(
     '#type' => 'item',
     '#id' => 'independent-corners-set',
-    '#states' => array(
-      'visible' => array(
-        ':input[name="data[independent_corners_set][independent_corners]"]' => array('checked' => TRUE),
-      ),
-    ),
   );
   foreach ($corners as $attribute => $label) {
     $form['independent_corners_set']['radii'][$attribute] = array(
@@ -101,7 +96,7 @@ function canvasactions_roundedcorners_form($action) {
   return $form;
 }
 
-function canvasactions_roundedcorners_effect($image, $action) {
+function canvasactions_roundedcorners_effect($image, $action = array()) {
   $independent_corners = !empty($action['independent_corners_set']['independent_corners']);
   if (!$independent_corners) {
     // set the independant corners to all be the same.
@@ -129,7 +124,7 @@ function canvasactions_roundedcorners_effect($image, $action) {
  * @param $image
  * @param $action
  */
-function image_gd_roundedcorners($image, $action) {
+function image_gd_roundedcorners($image, $action = array()) {
   // Read settings.
   $width = $image->info['width'];
   $height = $image->info['height'];
@@ -270,7 +265,7 @@ function _canvasactions_roundedcorners_pixel_opacity($x, $y, $r) {
 /**
  * imageapi_roundedcorners
  */
-function image_imagemagick_roundedcorners($image, $action) {
+function image_imagemagick_roundedcorners($image, $action = array()) {
   // Based on the imagemagick documentation.
   // http://www.imagemagick.org/Usage/thumbnails/#rounded
   // Create arc cut-outs, then mask them.

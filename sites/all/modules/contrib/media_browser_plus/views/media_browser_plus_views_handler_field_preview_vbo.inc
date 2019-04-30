@@ -69,39 +69,29 @@ class media_browser_plus_views_handler_field_preview_vbo extends views_bulk_oper
    */
   public function render($values) {
     $output = parent::render($values);
-    if ($file = file_load($values->fid)) {
+    $file = file_load($values->fid);
 
-      // Prepare file link.
-      switch ($this->options['mbp_settings']['add_link']) {
-        case 'delete':
-        case 'edit':
-        case 'usage':
-        case 'view':
-        case 'download':
-          $link = file_entity_uri($file) . '/' . $this->options['mbp_settings']['add_link'];
-          break;
+    // Prepare file link.
+    switch ($this->options['mbp_settings']['add_link']) {
+      case 'delete':
+      case 'edit':
+      case 'usage':
+      case 'view':
+      case 'download':
+        $link = file_entity_uri($file) . '/' . $this->options['mbp_settings']['add_link'];
+        break;
 
-        case 'file':
-          $link = file_create_url($file->uri);
-          break;
+      case 'file':
+        $link = file_create_url($file->uri);
+        break;
 
-        default:
-          $link = NULL;
-      }
-
-      $preview = media_get_thumbnail_preview($file, $link);
-
-      $output .= drupal_render($preview);
+      default:
+        $link = NULL;
     }
-    else {
-      watchdog(
-        'media_browser_plus',
-        'Unable to load the file %fid. Please check db consistency!',
-        array('%fid' => $values->fid),
-        WATCHDOG_ERROR
-      );
-    }
+
+    $preview = media_get_thumbnail_preview($file, $link);
+
+    $output .= drupal_render($preview);
     return $output;
   }
-
 }
