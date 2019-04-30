@@ -22,6 +22,7 @@ class PharExtensionInterceptor implements Assertable {
    *
    * @param string $path
    *   The path of the phar file to check.
+   *
    * @param string $command
    *   The command being carried out.
    *
@@ -45,8 +46,6 @@ class PharExtensionInterceptor implements Assertable {
   }
 
   /**
-   * Determines if a path has a .phar extension or invoked execution.
-   *
    * @param string $path
    *   The path of the phar file to check.
    *
