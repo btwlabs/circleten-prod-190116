@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Audio & Rss feature.
+ */
+
+include_once('audio_rss.features.inc');

@@ -1,0 +1,170 @@
+ name  = Church Profile
+ core  = 7.x
+
+;theme = artistbase
+
+ files[]        = church_profile.install
+ files[]        = church_profile.make
+ files[]        = church_profile.profile
+
+; -----------------------------------------------------------------------------
+;                                  Modules
+; -----------------------------------------------------------------------------
+; List the modules (core, contrib and/or features) to be enabled in the
+; ;dependencies[] array. Any ;dependencies of the listed modules will be detected
+; and enabled automatically.
+; -----------------------------------------------------------------------------
+
+; Core
+ 
+ dependencies[] = block
+ dependencies[] = contextual
+ dependencies[] = dblog
+ dependencies[] = field_ui
+ dependencies[] = file
+ dependencies[] = help
+ dependencies[] = image
+ dependencies[] = list
+ dependencies[] = menu
+ dependencies[] = number
+ dependencies[] = options
+ dependencies[] = overlay
+ dependencies[] = path
+ dependencies[] = rdf
+ dependencies[] = shortcut
+ dependencies[] = taxonomy
+ dependencies[] = toolbar
+
+; Contrib
+
+ dependencies[] = ctools
+ dependencies[] = eva
+ dependencies[] = features
+ dependencies[] = mediaelement
+ dependencies[] = media_vimeo
+ dependencies[] = module_filter
+ dependencies[] = multiselect
+ dependencies[] = profile2
+ dependencies[] = strongarm
+;dependencies[] = views_rss
+;dependencies[] = views_rss_itunes
+
+; Features
+
+ dependencies[] = advertisement_banners
+ dependencies[] = audio_rss
+ dependencies[] = basic_page
+ dependencies[] = comments 
+ dependencies[] = events
+ dependencies[] = mcn_base_feature
+ dependencies[] = mcn_wysiwyg
+ dependencies[] = members
+ dependencies[] = ministry
+ dependencies[] = news
+ dependencies[] = newsletter
+ dependencies[] = photos
+ dependencies[] = service
+ dependencies[] = simple_blog
+ dependencies[] = staff
+ dependencies[] = views_feature 
+ dependencies[] = videos
+
+; Variables
+
+ variables[admin_theme]                     = seven
+ variables[block_cache]                     = 1
+ variables[configurable_timezones]          = 0
+ variables[date_default_timezone]           = America/Chicago
+ variables[date_first_day]                  = 0
+ variables[error_level]                     = 0
+;variables[maintenance_theme]               = maintenance
+ variables[node_admin_theme]                = 1
+ variables[page_compression]                = 0
+ variables[pathauto_node_pattern]           = [node:title]
+ variables[site_default_country]            = US
+ variables[site_mail]                       = noreply@mcninteractive.com
+;variables[theme_default]                   = 
+ variables[update_check_frequency]          = 7
+ variables[update_notification_threshold]   = security
+ variables[update_notify_emails][0]         = sysadmin@mcninteractive.com
+
+; -----------------------------------------------------------------------------
+;                                  Default Users
+; -----------------------------------------------------------------------------
+
+ users[joe][uid]             = 2
+ users[joe][name]            = joe
+ users[joe][mail]            = joe.stewart@mcninteractive.com
+ users[joe][roles]           = developer,administrator
+ users[joe][status]          = 1
+
+ users[chris][uid]           = 3
+ users[chris][name]          = chris
+ users[chris][mail]          = christopher.smith@mcninteractive.com
+ users[chris][roles]         = administrator
+ users[chris][status]        = 1
+
+ users[martin][uid]          = 4
+ users[martin][name]         = martin
+ users[martin][mail]         = martin.rote@mcninteractive.com
+ users[martin][roles]        = developer
+ users[martin][status]       = 1
+ 
+ users[stephen][uid]         = 5
+ users[stephen][name]        = stephen
+ users[stephen][mail]        = stephen.smith@mcninteractive.com
+ users[stephen][roles]       = developer
+ users[stephen][status]      = 1
+ 
+ users[mike][uid]            = 6
+ users[mike][name]           = mike
+ users[mike][mail]           = mike.mclean@mcninteractive.com
+ users[mike][roles]          = developer
+ users[mike][status]         = 1
+ 
+ users[dabney][uid]          = 7
+ users[dabney][name]         = dabney
+ users[dabney][mail]         = dabney.morris@mcninteractive.com
+ users[dabney][roles]        = developer
+ users[dabney][status]       = 1
+ 
+ users[tommy][uid]           = 8
+ users[tommy][name]          = tommy
+ users[tommy][mail]          = tommy.stalknecht@mcninteractive.com
+ users[tommy][roles]         = account manager
+ users[tommy][status]        = 1
+
+ users[hagler][uid]          = 9
+ users[hagler][name]         = hagler
+ users[hagler][mail]         = mike.hagler@mcninteractive.com
+ users[hagler][roles]        = account manager
+ users[hagler][status]       = 1
+
+ users[jaymie][uid]          = 10
+ users[jaymie][name]         = jaymie
+ users[jaymie][mail]         = jaymie.guillory@mcninteractive.com
+ users[jaymie][roles]        = account manager
+ users[jaymie][status]       = 1
+ 
+ users[michelle][uid]        = 11
+ users[michelle][name]       = michelle
+ users[michelle][mail]       = michelle.garramone@mcninteractive.com
+ users[michelle][roles]      = account manager
+ users[michelle][status]     = 1
+
+ users[intern][uid]          = 12
+ users[intern][name]         = intern
+ users[intern][mail]         = intern@mcninteractive.com
+ users[intern][roles]        = client
+ users[intern][status]       = 1
+ 
+; -----------------------------------------------------------------------------
+;                                  Nodes
+; -----------------------------------------------------------------------------
+; Add home page for custom sites.
+; -----------------------------------------------------------------------------
+
+ nodes[front][type]  = page
+ nodes[front][title] = Home
+ nodes[front][uid]   = 1
+

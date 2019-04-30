@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Ministry feature.
+ */
+
+include_once('ministry.features.inc');
