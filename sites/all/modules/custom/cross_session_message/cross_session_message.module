@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * @file implementations of hook_ functions
+ */
+
+/**
+ * Implementation of hook_permission
+ */
+function cross_session_message_permission() {
+  return array(
+    'send cross-session messages' => array(
+      'title' => t('Send Cross-session Messages'),
+      'description' => t('Allows users to drupal_set_message to other users'),
+    ),
+    'receive cross-session messages' => array(
+      'title' => t('Receive Cross-session Messages'),
+      'description' => t('Allow users to receive drupal_set_message alerts from other users'),
+    ),
+  );
+} // hook_permission
+
+/**
+ * Implementation of hook_init
+ */
+function cross_session_message_init() {
+  if (user_access('receive cross-session messages')) {
+    global $user;
+    $messages = cross_session_message_get($user->uid);
+    foreach ($messages AS $msg) {
+      drupal_set_message($msg->message, $msg->type, $msg->message_repeats);
+    }
+    cross_session_message_clear($user->uid);
+  } // if user_access receive cross-session messages
+} // hook_init
+
+/**
+ * Retrieve a user's messages from the database
+ *
+ * @param $uid int - user's ID
+ * @return object - associated "array" object from the database
+ */
+function cross_session_message_get($uid) {
+  return db_query(
+    'SELECT @rownum:=@rownum+1 AS rownum, csm.* '
+    . 'FROM {cross_session_message} csm, (SELECT @rownum:=0) r '
+    . 'WHERE uid=:uid',
+    array(':uid' => $uid)
+  )->fetchAllAssoc('rownum');
+} // cross_session_message_get
+
+/**
+ * Set a message for a user
+ *
+ * @param $user mixed - a user object or a uid from a user
+ * @param $message string - per drupal_set_message
+ * @param $type string - per drupal_set_message
+ * @param $repeat boolean - per drupal_set_message
+ */
+function cross_session_message_set($user, $message, $type = 'status', $repeat = FALSE) {
+  $uid = is_int($user) ? $user : $user->uid;
+  db_insert('cross_session_message')
+    ->fields(array(
+      'uid' => $uid,
+      'message' => $message,
+      'type' => $type,
+      'message_repeats' => (int)$repeat,
+    ))
+    ->execute();
+} // cross_session_message_set
+
+/**
+ * Clear a user's messages from the database
+ *
+ * @param $uid int - user id
+ */
+function cross_session_message_clear($uid) {
+  db_delete('cross_session_message')
+    ->condition('uid', $uid, '=')
+    ->execute();
+} // cross_session_message_clear

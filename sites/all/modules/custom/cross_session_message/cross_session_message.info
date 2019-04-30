@@ -1,0 +1,5 @@
+name = Cross-session Messaging
+description = Invoke drupal_set_message on another user's session
+core = 7.x
+package = Base MCN Features
+dependencies[] = rules

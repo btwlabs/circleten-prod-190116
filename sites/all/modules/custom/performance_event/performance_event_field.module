@@ -1,0 +1,219 @@
+<?php
+
+/**
+ * @file implements various hook functions
+ */
+
+/**
+ * Implementation of hook_field_info
+ */
+function performance_event_field_field_info() {
+  return array(
+    'performance_event_link' => array(
+      'label' => t('Performance event link'),
+      'description' => t('Display a link to specific roles in a specific date range'),
+      'default_widget' => 'performance_event_link_widget',
+      'default_formatter' => 'performance_event_link_formatter',
+    ),
+  );
+} // hook_field_info
+
+/**
+ * Implementation of hook_field_is_empty
+ */
+function performance_event_field_field_is_empty($item, $field) {
+  return empty($item['performance_event_start']) 
+    && empty($item['performance_event_end'])
+    && empty($item['performance_event_text'])
+    && empty($item['performance_event_url'])
+  ;
+} // hook_field_is_empty
+
+/**
+ * Implementation of hook_field_widget_info
+ */
+function performance_event_field_field_widget_info() {
+  return array(
+    'performance_event_link_widget' => array(
+      'label' => t('Performance Event Timed Link'),
+      'field types' => array('performance_event_link'),
+    ),
+  );
+} // hook_field_widget_info
+
+/**
+ * Implementation of hook_field_widget_form
+ */
+function performance_event_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $widget = $element;
+  $widget['#delta'] = $delta;
+  $widget['#type'] = 'fieldset';
+  $widget['#title'] = t('Display link by role and date');
+  $widget['#tree'] = TRUE;
+  $def_text = isset($items[$delta]['performance_event_text']) ? $items[$delta]['performance_event_text'] : '';
+  $widget['performance_event_text'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Link Text'),
+    '#default_value' => $def_text,
+  );
+  $def_link = isset($items[$delta]['performance_event_link']) 
+    ? $items[$delta]['performance_event_link'] 
+    : '';
+  $widget['performance_event_link'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Link URL'),
+    '#default_value' => $def_link,
+    '#description' => t('Enter a valid relative or absolute URL (e.g. "node/add")'),
+  );
+  $def_roles = isset($items[$delta]['performance_event_roles']) ? $items[$delta]['performance_event_roles'] : '';
+  $widget['performance_event_roles'] = array(
+    '#type' => 'value',
+    '#value' => $def_roles,
+  );
+  $widget['performance_event_role_checkboxes'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Roles'),
+    '#description' => t('Which roles will see this link during the selected dates? ')
+      . t('Leave all roles unchecked to allow all users (including anonymous)'),
+    '#default_value' => unserialize($def_roles),
+    '#options' => user_roles(),
+  );
+  $def_start = isset($items[$delta]['performance_event_start']) ? $items[$delta]['performance_event_start'] : '';
+  $widget['performance_event_start'] = array(
+    '#type' => 'date_popup',
+    '#title' => t('Start Date'),
+    '#description' => t('When should this link start being displayed to the authorized roles?'),
+    '#default_value' => $def_start,
+    '#date_format' => variable_get('date_format_small', 'm/d/Y'),
+    '#date_year_range' => '-1:+5',
+  );
+  $def_end = isset($items[$delta]['performance_event_end']) ? $items[$delta]['performance_event_end'] : '';
+  $widget['performance_event_end'] = array(
+    '#type' => 'date_popup',
+    '#title' => t('End Date'),
+    '#description' => t('When should this link stop being displayed to the authorized roles?'),
+    '#default_value' => $def_end,
+    '#date_format' => variable_get('date_format_small', 'm/d/Y'),
+    '#date_year_range' => '-1:+5',
+  );
+  $widget['#element_validate'][] = 'performance_event_field_widget_validate';
+  $element = $widget;
+  return $element;
+} // hook_field_widget_form
+
+/**
+ * Validator function for field_widget_form
+ *  convert roles checkboxes into a string for storage
+ *
+ * @param $element array - per the drupal forms API
+ * @param &$form_state array - per the drupla forms API
+ */
+function performance_event_field_widget_validate($element, &$form_state, $form) {
+  $field_name = $element['#field_name'];
+  $delta = $element['#delta'];
+  $roles = $form_state['values'][$field_name][LANGUAGE_NONE][$delta]['performance_event_role_checkboxes'];
+  form_set_value($element['performance_event_roles'], serialize($roles), $form_state);
+  $start = $form_state['values'][$field_name][LANGUAGE_NONE][$delta]['performance_event_start'];
+  $end = $form_state['values'][$field_name][LANGUAGE_NONE][$delta]['performance_event_end'];
+  if ($end && $start && !(strtotime($end) > strtotime($start))) {
+    form_error($element['performance_event_end'], t('End date must be after start date'));
+  }
+} // performance_event_field_widget_validate
+
+/**
+ * Implementation of hook_field_formatter_info
+ */
+function performance_event_field_field_formatter_info() {
+  return array(
+    'performance_event_link_formatter' => array(
+      'label' => t('Performance Event Timed Link'),
+      'field types' => array('performance_event_link'),
+      'description' => t('Display a link based on user role and time'),
+    ),
+  );
+} // hook_field_formatter_info
+
+/**
+ * Implementation of hook_field_formatter_view
+ */
+function performance_event_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  global $user;
+  $element = array();
+  foreach ($items AS $delta => $item) {
+    $roles = unserialize($item['performance_event_roles']);
+    $start = $item['performance_event_start'];
+    $end = $item['performance_event_end'];
+    $text = $item['performance_event_text'];
+    $link = $item['performance_event_link'];
+    // our 3 tests are to check against the role, start date, and end date
+    $show_link = performance_event_field_check_roles($roles) 
+      && performance_event_field_check_start($start) 
+      && performance_event_field_check_end($end);
+    if ($show_link) {
+      $external = preg_match('/^https?:/', $link);
+      $element[$delta] = array(
+        '#type' => 'link',
+        '#title' => $text,
+        '#href' => $link,
+        '#options' => array(
+          'external' => $external,
+          'attributes' => array( 'class' => array('performance-event-timed-link')),
+        ),
+      );
+    } // show_link
+  } // foreach item in items
+  return $element;
+} // hook_field_formatter_view
+
+/**
+ * Check a list of roles against another to verify that a user can access a PE presale link
+ *
+ * @param $allowed_roles array - roles that are granted access to the link
+ * @param $user_roles array - the user's roles (default to current logged-in user)
+ * @return bool 
+ */
+function performance_event_field_check_roles($allowed_roles, $user_roles = NULL) {
+  $result = FALSE;
+  $allowed_roles = array_filter($allowed_roles); // remove zero values
+  if (empty($allowed_roles)) { // allow all
+    $result = TRUE;
+  } else {
+    if (!$user_roles) {
+      global $user;
+      $user_roles = $user->roles;
+    } 
+    foreach ($user_roles AS $rid => $role) {
+      if ($allowed_roles[$rid]) {
+        $result = TRUE;
+        break;
+      }
+    } // foreach rid=>role in user->roles
+  } // if !empty(allowed_roles)
+  return $result;
+} // performance_event_field_check_roles
+
+/**
+ * Verify that current date is later than specified start date
+ *
+ * @param $start date - what's the format here?
+ * @return bool
+ */
+function performance_event_field_check_start($start) {
+  // The logic here is:
+  //    No start value specified - The event does not filter by start time. Return TRUE
+  //    Current time is > start time - The start time has been passed. Return TRUE
+  return !$start || strtotime($start) < time();
+} // performance_event_field_check_start
+
+/**
+ * Verify that current date is before a specified start date
+ *
+ * @param $end date - what's the format here?
+ * @return bool
+ */
+function performance_event_field_check_end($end) {
+  // The logic here is:
+  //    No end value specified - The event does not filter by end time. Return TRUE
+  //    Current time is < end time - The end time has not been passed. Return TRUE
+  return !$end || strtotime($end) > time();
+} // performance_event_field_check_end

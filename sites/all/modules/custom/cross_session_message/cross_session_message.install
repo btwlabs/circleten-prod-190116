@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * @file installation hooks
+ */
+
+/**
+ * Implementation of hook_schema
+ */
+function cross_session_message_schema() {
+  $schema['cross_session_message'] = array(
+    'description' => 'Undelivered cross-session messages',
+    'fields' => array(
+      'uid' => array(
+        'description' => 'User id', 
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'message' => array(
+        'description' => 'Per drupal_set_message',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'Per drupal_set_message',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'message_repeats' => array(
+        'description' => 'Per drupal_set_message',
+        'type' => 'int',
+      ),
+    ), // fields
+    'foreign keys' => array(
+      'users' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ), // foreign keys
+  ); // $schema['cross_session_message']
+  return $schema;
+} // hook_schema

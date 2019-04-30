@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file installation and schema hooks
+ */
+
+/**
+ * Implementation of hook_field_schema
+ */
+function performance_event_field_field_schema($field) {
+  module_load_include('module', 'date_api');
+  $columns = array(
+    'performance_event_text' => array('type' => 'text'),
+    'performance_event_link' => array('type' => 'text'),
+    'performance_event_roles' => array('type' => 'text'), // serialized array of  roles
+    'performance_event_start' => array(
+      'type' => 'datetime',
+      'mysql_type' => 'datetime',
+      'pgsql_type' => 'timestamp without time zone',
+      'sqlite_type' => 'varchar',
+      'sqlsrv_type' => 'smalldatetime',
+    ),
+    'performance_event_end' => array(
+      'type' => 'datetime',
+      'mysql_type' => 'datetime',
+      'pgsql_type' => 'timestamp without time zone',
+      'sqlite_type' => 'varchar',
+      'sqlsrv_type' => 'smalldatetime',
+    ),
+  );
+  return array(
+    'columns' => $columns,
+  );
+} // hook_field_schema

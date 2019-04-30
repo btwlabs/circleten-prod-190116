@@ -1,0 +1,5 @@
+name = Performance Event Fields
+description = Custom field(s) for MCN performance events. For/by MCN Interactive
+core = 7.x
+package = Base MCN Features
+dependencies[] = date

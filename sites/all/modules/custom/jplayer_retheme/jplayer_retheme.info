@@ -1,0 +1,5 @@
+name = jPlayer retheme
+description = Rethemes jPlayer's output to play nicely with Views
+package = Media
+core = 7.x
+dependencies[] = jplayer
